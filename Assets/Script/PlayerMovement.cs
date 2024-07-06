@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     public float jumpButtonGracePeriod;
 
     private Animator animator;
+    [SerializeField] private string inputNameParameter;
     private CharacterController characterController;
     private float ySpeed;
     private float originalStepOffset;
@@ -74,14 +75,16 @@ public class PlayerMovement : MonoBehaviour
 
         if (movementDirection != Vector3.zero)
         {
-            animator.SetBool("IsMoving", true);
+            Debug.Log("Dendy");
+            animator.SetBool(inputNameParameter, true);
             Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
 
             transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
         }
         else
         {
-            animator.SetBool("IsMoving", false);
+            Debug.Log("Dendy1");
+            animator.SetBool(inputNameParameter, false);
         }
     }
 }
