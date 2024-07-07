@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Door : MonoBehaviour, IInteractable
+public class Lever : MonoBehaviour, IInteractable
 {
     public float smooth = 2f; // Adjust this to control rotation speed
     public bool autoClose = true; // Set to true if you want the door to auto close
@@ -13,6 +13,9 @@ public class Door : MonoBehaviour, IInteractable
     public Transform pivot; // Assign this in the Inspector
 
     private bool isOpen = false;
+
+    public GameObject lever_path1;
+    private LeverPath1 leverPath1Script;
 
     void Start()
     {
@@ -31,6 +34,19 @@ public class Door : MonoBehaviour, IInteractable
         {
             defaultYRotation = pivot.eulerAngles.y;
         }
+
+        if (lever_path1 != null)
+        {
+            leverPath1Script = lever_path1.GetComponent<LeverPath1>();
+            if (leverPath1Script == null)
+            {
+                Debug.LogError("LeverPath1Script not found on lever_path1. Please add the LeverPath1Script to lever_path1.");
+            }
+        }
+        else
+        {
+            Debug.LogError("lever_path1 not assigned. Please assign the lever_path1 GameObject in the Inspector.");
+        }
     }
 
     void Update()
@@ -46,11 +62,11 @@ public class Door : MonoBehaviour, IInteractable
         // Auto close the door if the timer expires
         if (timer <= 0f && isOpen && autoClose)
         {
-            ToggleDoor(player.position);
+            ToggleLever(player.position);
         }
     }
 
-    public void ToggleDoor(Vector3 pos)
+    public void ToggleLever(Vector3 pos)
     {
         if (pivot == null) return;
 
@@ -62,10 +78,20 @@ public class Door : MonoBehaviour, IInteractable
             float dot = Vector3.Dot(transform.right, dir);
             targetYRotation = Mathf.Sign(dot) * 180f; // Rotate 180 degrees
             timer = 5f; // Set the timer for auto close
+
+            if (leverPath1Script != null)
+            {
+                leverPath1Script.isMovingLever = true;
+            }
         }
         else
         {
             targetYRotation = 0f;
+
+            if (leverPath1Script != null)
+            {
+                leverPath1Script.isMovingLever = false;
+            }
         }
     }
 
@@ -77,11 +103,11 @@ public class Door : MonoBehaviour, IInteractable
             return;
         }
 
-        ToggleDoor(player.position);
+        ToggleLever(player.position);
     }
 
     public string GetDescription()
     {
-        return isOpen ? "Press E to close the door" : "Press E to open the door";
+        return isOpen ? "Press E to pull the lever counterclockwise" : "Press E to pull the lever clockwise";
     }
 }
