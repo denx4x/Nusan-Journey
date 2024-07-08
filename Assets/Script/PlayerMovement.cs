@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
         animator = GetComponent<Animator>();
         characterController = GetComponent<CharacterController>();
         originalStepOffset = characterController.stepOffset;
+        Time.timeScale = 1f;
     }
 
     // Update is called once per frame
