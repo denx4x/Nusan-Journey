@@ -1,13 +1,24 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start() {
+    private PlayerControls controls;
 
+    // Properti public untuk mengakses PlayerControls
+    public PlayerControls PlayerControls {
+        get { return controls; }
     }
 
-    // Update is called once per frame
-    void Update() {
+    private void Awake() {
+        controls = new PlayerControls();
+        Debug.Log("PlayerControls diinisialisasi: " + (controls != null));
+    }
 
+    private void OnEnable() {
+        controls.Enable();
+    }
+
+    private void OnDisable() {
+        controls.Disable();
     }
 }
