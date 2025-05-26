@@ -36,7 +36,6 @@ public class PlayerMovement : MonoBehaviour {
         }
     }
 
-    // Callback untuk aksi Movement
     private void OnMovementPerformed(InputAction.CallbackContext ctx) {
         movementInput = ctx.ReadValue<Vector2>();
         Debug.Log("OnMovement: " + movementInput);
@@ -46,8 +45,7 @@ public class PlayerMovement : MonoBehaviour {
         movementInput = Vector2.zero;
         Debug.Log("Movement canceled");
     }
-
-    // Callback untuk aksi Run
+    
     private void OnRunPerformed(InputAction.CallbackContext ctx) {
         isRunning = ctx.ReadValueAsButton();
         Debug.Log("OnRun: " + isRunning);
@@ -66,19 +64,16 @@ public class PlayerMovement : MonoBehaviour {
     private void HandleMovement() {
         Vector3 moveDirection = new Vector3(movementInput.x, 0, movementInput.y);
 
-        if (moveDirection.magnitude > 0.1f) {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        if (moveDirection.magnitude > 0.1f) {            
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);            
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
         float speed = isRunning ? runSpeed : walkSpeed;
         controller.Move(moveDirection * speed * Time.deltaTime);
     }
     
-    private void UpdateAnimatorState() {
-        if (animator == null) return;
-
-        // Cek apakah ada input pergerakan.
+    private void UpdateAnimatorState() {        
         bool moving = movementInput.magnitude >= 0.1f;
         
         animator.SetBool("IsMovingNusan", moving);
