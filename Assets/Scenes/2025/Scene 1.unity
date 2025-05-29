@@ -534,7 +534,7 @@ GameObject:
   - component: {fileID: 130505731}
   m_Layer: 0
   m_Name: Rotate Mirror 3
-  m_TagString: Light
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -984,9 +984,10 @@ GameObject:
   m_Component:
   - component: {fileID: 436050558}
   - component: {fileID: 436050559}
+  - component: {fileID: 436050560}
   m_Layer: 0
   m_Name: Cube
-  m_TagString: Untagged
+  m_TagString: LightTarget
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1026,6 +1027,27 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &436050560
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 436050557}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4, y: 1, z: 1.4}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &449976358
 GameObject:
@@ -3547,24 +3569,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mirrorObjects:
-  - inputRotation:
+  - mirrorID: 1
+    Mirror: {fileID: 1460765062}
+    inputRotation:
     - {x: 0, y: 50, z: 0}
     - {x: 0, y: 20, z: 0}
     - {x: 0, y: -1, z: 0}
-    targetRotation: {x: 0, y: 0, z: 0}
-    gameObjectLight: {fileID: 1155684533}
-    gameObjectTargetLight: {fileID: 1120794999}
-    Mirror: {fileID: 1460765062}
-    mirrorID: 1
-    currentRotationIndex: -1
-    isForward: 1
     triggerLightEvent: 1
+    activationDelay: 1
     objectsToActivate:
     - {fileID: 2044007318}
+    currentRotationIndex: -1
+    isForward: 1
+  - mirrorID: 2
+    Mirror: {fileID: 1120794999}
+    inputRotation:
+    - {x: 0, y: 235.8, z: 0}
+    triggerLightEvent: 1
+    activationDelay: 2
+    objectsToActivate:
+    - {fileID: 1250096891}
+    currentRotationIndex: -1
+    isForward: 1
   rotationDuration: 1
   interactionCooldown: 0.5
-  activeMirrorID: 
-  lightTouchThreshold: 3
 --- !u!4 &822101054
 Transform:
   m_ObjectHideFlags: 0
@@ -4168,9 +4196,11 @@ GameObject:
   - component: {fileID: 1120795005}
   - component: {fileID: 1120795004}
   - component: {fileID: 1120795003}
+  - component: {fileID: 1120795008}
+  - component: {fileID: 1120795007}
   m_Layer: 0
   m_Name: Rotate Mirror 2
-  m_TagString: Light
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4283,6 +4313,46 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1120794999}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!54 &1120795007
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1120794999}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!114 &1120795008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1120794999}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 904c632e6565db7478d3a658ed012070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mirrorID: 2
 --- !u!1 &1155684533
 GameObject:
   m_ObjectHideFlags: 0
@@ -4295,6 +4365,7 @@ GameObject:
   - component: {fileID: 1155684537}
   - component: {fileID: 1155684536}
   - component: {fileID: 1155684535}
+  - component: {fileID: 1155684539}
   m_Layer: 0
   m_Name: Light
   m_TagString: Untagged
@@ -4391,6 +4462,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1460765063}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1155684539
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1155684533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eca2c9caa3a9fc40a1ab26c1cdf6557, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ownerMirrorID: 1
 --- !u!1 &1185320297
 GameObject:
   m_ObjectHideFlags: 0
@@ -4988,9 +5072,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1386053633}
   - component: {fileID: 1386053634}
+  - component: {fileID: 1386053635}
   m_Layer: 0
   m_Name: Cube
-  m_TagString: Untagged
+  m_TagString: LightTarget
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5030,6 +5115,27 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &1386053635
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1386053632}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4, y: 1, z: 1.4}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1425127224
 GameObject:
@@ -6910,7 +7016,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: UI
+  m_text: Finish
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2085f4f5394305045ae8b4c2adb033e0, type: 2}
   m_sharedMaterial: {fileID: 2983439605020832797, guid: 2085f4f5394305045ae8b4c2adb033e0,
@@ -7174,6 +7280,7 @@ GameObject:
   - component: {fileID: 2044007323}
   - component: {fileID: 2044007322}
   - component: {fileID: 2044007321}
+  - component: {fileID: 2044007324}
   m_Layer: 0
   m_Name: Light
   m_TagString: Untagged
@@ -7270,6 +7377,19 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2044007318}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2044007324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044007318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eca2c9caa3a9fc40a1ab26c1cdf6557, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ownerMirrorID: 2
 --- !u!1 &2051104169
 GameObject:
   m_ObjectHideFlags: 0

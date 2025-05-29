@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MirrorTrigger : MonoBehaviour {
+public class MirrorIDReference : MonoBehaviour {
     // Identifier yang mengikuti mirrorID yang ada pada MirrorObject.
     public string mirrorID = "";
 

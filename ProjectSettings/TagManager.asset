@@ -7,7 +7,7 @@ TagManager:
   - Dead
   - Player 2
   - Interactable
-  - Light
+  - LightTarget
   layers:
   - Default
   - TransparentFX
