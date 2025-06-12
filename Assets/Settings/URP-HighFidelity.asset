@@ -24,8 +24,8 @@ MonoBehaviour:
   m_OpaqueDownsampling: 3
   m_SupportsTerrainHoles: 1
   m_SupportsHDR: 1
-  m_HDRColorBufferPrecision: 0
-  m_MSAA: 4
+  m_HDRColorBufferPrecision: 1
+  m_MSAA: 8
   m_RenderScale: 1
   m_UpscalingFilter: 3
   m_FsrOverrideSharpness: 1
@@ -72,7 +72,7 @@ MonoBehaviour:
   m_SupportsDynamicBatching: 0
   m_MixedLightingSupported: 1
   m_SupportsLightCookies: 1
-  m_SupportsLightLayers: 0
+  m_SupportsLightLayers: 1
   m_DebugLevel: 0
   m_StoreActionsOptimization: 0
   m_UseAdaptivePerformance: 1
