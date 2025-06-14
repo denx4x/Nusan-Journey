@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System; // Diperlukan untuk menggunakan 'event Action'
 
 public class GridPuzzleManager : MonoBehaviour {
     [Header("Pengaturan Grid")]
@@ -23,6 +24,9 @@ public class GridPuzzleManager : MonoBehaviour {
     [Tooltip("Masukkan objek yang menandakan Target (Cahaya) di sini.")]
     public Transform targetTile;
 
+    // Event untuk memberitahu sistem lain (seperti PuzzleModeController) bahwa puzzle sudah selesai
+    public event Action OnPuzzleCompleted;
+
     // Variabel internal
     private GridObject[,] grid;
     private Vector2Int targetGridPosition;
@@ -32,24 +36,28 @@ public class GridPuzzleManager : MonoBehaviour {
     private GridObject selectedObject;
 
     void Start() {
+        // Validasi penting: pastikan gridOrigin sudah di-assign
         if (gridOrigin == null) {
             Debug.LogError("PENTING: 'Grid Origin' belum di-assign di GridPuzzleManager! Buat Empty GameObject, posisikan di pojok puzzle, dan assign ke field ini.");
-            this.enabled = false;
+            this.enabled = false; // Nonaktifkan script jika setup gagal
             return;
         }
         InitializeGrid();
     }
 
-    void InitializeGrid() {
+    // Fungsi ini bisa dipanggil lagi dari luar jika ingin menginisialisasi ulang
+    public void InitializeGrid() {
         grid = new GridObject[gridWidth, gridHeight];
         initialPositions = new Dictionary<GridObject, Vector2Int>();
 
+        // 1. Tempatkan Walls (tidak perlu disimpan posisi awalnya karena statis)
         foreach (var wall in walls) {
             Vector2Int pos = WorldToGridPosition(wall.transform.position);
             PlaceObjectOnGrid(wall, pos);
             wall.transform.position = GridToWorldPosition(wall, pos);
         }
 
+        // 2. Tempatkan Obstacles dan simpan posisi awalnya
         foreach (var obstacle in obstacles) {
             Vector2Int pos = WorldToGridPosition(obstacle.transform.position);
             PlaceObjectOnGrid(obstacle, pos);
@@ -57,16 +65,18 @@ public class GridPuzzleManager : MonoBehaviour {
             initialPositions[obstacle] = pos;
         }
 
+        // 3. Tempatkan Player dan simpan posisi awalnya
         if (playerObject != null) {
             Vector2Int pos = WorldToGridPosition(playerObject.transform.position);
             PlaceObjectOnGrid(playerObject, pos);
             playerObject.transform.position = GridToWorldPosition(playerObject, pos);
             initialPositions[playerObject] = pos;
-            SelectObject(playerObject);
+            SelectObject(playerObject); // Otomatis pilih Player di awal
         } else {
             Debug.LogError("Player Object belum di-assign!");
         }
 
+        // 4. Catat posisi target dan snap juga posisinya agar pas
         if (targetTile != null) {
             targetGridPosition = WorldToGridPosition(targetTile.position);
             targetTile.position = GridToWorldPosition(null, targetGridPosition);
@@ -76,17 +86,21 @@ public class GridPuzzleManager : MonoBehaviour {
     }
 
     void Update() {
-        if (isMoving || puzzleSolved) return;
+        // Kunci input jika ada animasi bergerak, puzzle sudah selesai, atau script tidak aktif
+        if (isMoving || puzzleSolved || !this.enabled) return;
 
+        // Input untuk memilih objek dengan klik mouse
         if (Input.GetMouseButtonDown(0)) {
             HandleSelection();
         }
 
+        // Input untuk mereset puzzle dengan tombol 'R'
         if (Input.GetKeyDown(KeyCode.R)) {
             ResetPuzzle();
-            return;
+            return; // Hentikan proses frame ini setelah reset
         }
 
+        // Input untuk pergerakan objek yang sedang dipilih
         if (selectedObject != null) {
             Vector2Int direction = Vector2Int.zero;
             if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) direction = Vector2Int.up;
@@ -150,6 +164,7 @@ public class GridPuzzleManager : MonoBehaviour {
         if (playerObject.gridPosition == targetGridPosition) {
             Debug.Log("<color=green><b>SELAMAT! Puzzle Selesai!</b></color>");
             puzzleSolved = true;
+            OnPuzzleCompleted?.Invoke(); // Panggil event
         }
     }
 
@@ -171,21 +186,22 @@ public class GridPuzzleManager : MonoBehaviour {
         if (playerObject != null) SelectObject(playerObject);
     }
 
+    // --- Helper Functions ---
+
     private bool IsInBounds(Vector2Int pos) { return pos.x >= 0 && pos.x < gridWidth && pos.y >= 0 && pos.y < gridHeight; }
     private void PlaceObjectOnGrid(GridObject obj, Vector2Int pos) { if (IsInBounds(pos)) { if (grid[pos.x, pos.y] != null) Debug.LogWarning($"Posisi {pos} sudah terisi oleh {grid[pos.x, pos.y].name}, akan ditimpa oleh {obj.name}"); grid[pos.x, pos.y] = obj; obj.gridPosition = pos; } }
     public Vector2Int WorldToGridPosition(Vector3 worldPosition) { if (gridOrigin == null) return Vector2Int.zero; Vector3 relativePos = worldPosition - gridOrigin.position; int x = Mathf.RoundToInt(relativePos.x / tileSize); int y = Mathf.RoundToInt(relativePos.z / tileSize); return new Vector2Int(x, y); }
     public Vector3 GridToWorldPosition(GridObject obj, Vector2Int gridPosition) { if (gridOrigin == null) return Vector3.zero; Vector3 relativePos = new Vector3(gridPosition.x * tileSize, 0, gridPosition.y * tileSize); float yPos = (obj != null) ? obj.transform.position.y : gridOrigin.position.y; if (obj == null && targetTile != null) yPos = targetTile.position.y; return relativePos + new Vector3(gridOrigin.position.x, yPos, gridOrigin.position.z); }
 
-    // --- FUNGSI BARU UNTUK VISUALISASI DI EDITOR ---
+    // --- Fungsi untuk Visualisasi di Editor ---
     private void OnDrawGizmos() {
         if (gridOrigin == null) {
             return;
         }
-
         Gizmos.color = new Color(1f, 1f, 1f, 0.2f);
-
         for (int x = 0; x < gridWidth; x++) {
             for (int y = 0; y < gridHeight; y++) {
+                // Gunakan overload yang tidak memerlukan GridObject untuk menggambar grid kosong
                 Vector3 cellCenter = GridToWorldPosition(null, new Vector2Int(x, y));
                 Gizmos.DrawWireCube(cellCenter, new Vector3(tileSize, 0.1f, tileSize));
             }
