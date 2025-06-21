@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 
@@ -46,3 +47,5 @@ public class CustomScriptNameInspector : Editor {
         return texture;
     }
 }
+
+#endif

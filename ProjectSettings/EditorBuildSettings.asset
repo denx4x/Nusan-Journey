@@ -9,7 +9,16 @@ EditorBuildSettings:
     path: Assets/Scenes/2025/Main Menu 1.unity
     guid: 843500c1d7968314ebc87b5439d9f91e
   - enabled: 1
+    path: Assets/Scenes/2025/Prologue.unity
+    guid: 799bb7e002976bc4eb3bbb09a06fe072
+  - enabled: 1
     path: Assets/Scenes/2025/Scene 1.unity
     guid: 1a91fe925653b224bbd74adead88bf34
+  - enabled: 1
+    path: Assets/Scenes/2025/Scene 2.unity
+    guid: a57e2cd0b51738b4e904fa2b15dacf7e
+  - enabled: 1
+    path: Assets/Scenes/2025/Scene 3.unity
+    guid: 295e18bebd6d00744ba1e98247f16317
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

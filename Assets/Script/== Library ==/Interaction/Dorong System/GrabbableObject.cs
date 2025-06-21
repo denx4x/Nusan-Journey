@@ -1,10 +1,11 @@
 using UnityEngine;
 
-// Skrip ini mengimplementasikan IInteractPlayer agar bisa diinteraksi
 public class GrabbableObject : MonoBehaviour, IInteractPlayer {
     private Rigidbody rb;
     private Transform playerHoldPoint;
-    private PlayerMovement playerMovement;
+    private PlayerStateHandler playerStateHandler;
+    // BARU: Referensi ke PlayerInteraction
+    private PlayerInteraction playerInteraction;
 
     private bool isBeingHeld = false;
 
@@ -12,88 +13,64 @@ public class GrabbableObject : MonoBehaviour, IInteractPlayer {
         rb = GetComponent<Rigidbody>();
     }
 
-    // Fungsi ini dipanggil oleh PlayerInteraction saat tombol Interact ditekan
     public void Interact() {
         if (!isBeingHeld) {
-            // --- LOGIKA MENGAMBIL OBJEK ---
-            if (playerHoldPoint != null) {
-                // Matikan fisika agar objek mengikuti player
+            // Pastikan kita punya semua referensi sebelum mengambil
+            if (playerHoldPoint != null && playerStateHandler != null && playerInteraction != null) {
                 rb.isKinematic = true;
-
-                // Tempelkan objek ke holdPoint player
                 transform.SetParent(playerHoldPoint);
-                transform.localPosition = Vector3.zero; // Reset posisi relatif terhadap holdPoint
-                transform.localRotation = Quaternion.identity; // Reset rotasi
+                transform.localPosition = Vector3.zero;
+                transform.localRotation = Quaternion.identity;
 
-                // Beritahu PlayerMovement bahwa kita sedang mode mendorong/membawa
-                if (playerMovement != null) playerMovement.IsPushing = true;
+                playerStateHandler.IsPushing = true;
+                // BARU: Kunci sistem interaksi saat objek dipegang
+                playerInteraction.LockInteraction();
 
                 isBeingHeld = true;
-                Debug.Log("Objek diambil!");
             }
         } else {
-            // --- LOGIKA MELEPASKAN OBJEK ---
-            // Kembalikan objek ke root hierarchy
-            transform.SetParent(null);
+            // Pastikan kita punya referensi sebelum melepas
+            if (playerStateHandler != null && playerInteraction != null) {
+                transform.SetParent(null);
+                rb.isKinematic = false;
 
-            // Aktifkan lagi fisika agar objek jatuh/berhenti secara natural
-            rb.isKinematic = false;
+                playerStateHandler.IsPushing = false;
+                // BARU: Buka kunci sistem interaksi saat objek dilepas
+                playerInteraction.UnlockInteraction();
 
-            // Beritahu PlayerMovement kita sudah tidak mendorong
-            if (playerMovement != null) playerMovement.IsPushing = false;
-
-            isBeingHeld = false;
-            Debug.Log("Objek dilepaskan!");
+                isBeingHeld = false;
+            }
         }
     }
 
-    // Saat player masuk jangkauan, siapkan referensi yang dibutuhkan
-    // Tempelkan fungsi ini ke dalam GrabbableObject.cs
     private void OnTriggerEnter(Collider other) {
         if (isBeingHeld) return;
 
-        // Pesan 1: Untuk mengecek apakah trigger berfungsi
-        Debug.Log("Trigger dimasuki oleh objek: " + other.name);
-
         if (other.CompareTag("Player")) {
-            // Pesan 2: Untuk mengecek apakah Tag Player terdeteksi
-            Debug.Log("Objek yang masuk adalah Player.");
-
-            PlayerInteraction playerInteraction = other.GetComponent<PlayerInteraction>();
+            // Simpan referensi ke semua komponen player yang dibutuhkan
+            playerInteraction = other.GetComponent<PlayerInteraction>();
             if (playerInteraction != null) {
-                // Pesan 3: Untuk mengecek apakah interaksi berhasil didaftarkan
-                Debug.Log("PlayerInteraction DITEMUKAN! Mendaftarkan objek ini sebagai interactable.");
                 playerInteraction.SetCurrentInteractable(this);
-            } else {
-                Debug.LogError("Player TIDAK MEMILIKI skrip PlayerInteraction!");
             }
 
-            // Cek juga holdPoint dan PlayerMovement di sini
             playerHoldPoint = other.transform.Find("holdPoint");
-            if (playerHoldPoint == null) {
-                Debug.LogError("Tidak bisa menemukan 'holdPoint' sebagai child dari Player!");
-            }
-
-            playerMovement = other.GetComponent<PlayerMovement>();
-            if (playerMovement == null) {
-                Debug.LogError("Player TIDAK MEMILIKI skrip PlayerMovement!");
-            }
+            playerStateHandler = other.GetComponent<PlayerStateHandler>();
         }
     }
 
-    // Saat player keluar jangkauan, hapus referensi
     private void OnTriggerExit(Collider other) {
         if (isBeingHeld) return;
 
         if (other.CompareTag("Player")) {
-            PlayerInteraction playerInteraction = other.GetComponent<PlayerInteraction>();
+            // Gunakan referensi yang sudah disimpan untuk membersihkan
             if (playerInteraction != null) {
                 playerInteraction.ClearCurrentInteractable(this);
             }
 
-            // Hapus referensi
+            // Hapus semua referensi
+            playerInteraction = null;
             playerHoldPoint = null;
-            playerMovement = null;
+            playerStateHandler = null;
         }
     }
 }

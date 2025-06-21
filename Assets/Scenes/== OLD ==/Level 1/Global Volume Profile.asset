@@ -15,7 +15,7 @@ MonoBehaviour:
   active: 1
   mode:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 2
   neutralHDRRangeReductionMode:
     m_OverrideState: 0
     m_Value: 2
@@ -198,13 +198,13 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.4
   intensity:
     m_OverrideState: 1
-    m_Value: 1.2
+    m_Value: 0.7
   scatter:
     m_OverrideState: 1
-    m_Value: 0.4
+    m_Value: 0.954
   clamp:
     m_OverrideState: 0
     m_Value: 65472

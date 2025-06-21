@@ -25,12 +25,18 @@ public class GridObject : MonoBehaviour {
 
     // Fungsi untuk menampilkan highlight saat objek ini dipilih
     public void Select() {
-        if (type == ObjectType.Wall) return; // Dinding tidak bisa dipilih
+        // --- TAMBAHKAN BARIS INI ---
+        Debug.Log($"Mencoba MENYALAKAN highlight untuk -> {gameObject.name}");
+
+        if (type == ObjectType.Wall) return;
         selectionHighlight?.SetActive(true);
     }
 
     // Fungsi untuk menyembunyikan highlight saat objek lain dipilih
     public void Deselect() {
+        // --- TAMBAHKAN BARIS INI ---
+        Debug.Log($"Mencoba MEMATIKAN highlight untuk -> {gameObject.name}");
+
         selectionHighlight?.SetActive(false);
     }
 

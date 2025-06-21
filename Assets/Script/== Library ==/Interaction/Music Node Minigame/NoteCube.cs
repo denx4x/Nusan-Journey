@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections; // Ditambahkan untuk IEnumerator
 
 public class NoteCube : MonoBehaviour {
     [Tooltip("ID unik untuk nada ini (misal: 0 untuk C, 1 untuk D, dst.)")]
@@ -7,47 +8,54 @@ public class NoteCube : MonoBehaviour {
     [Tooltip("File audio untuk nada ini")]
     public AudioClip noteSound;
 
-    private AudioSource audioSource;
-    private NoteManager noteManager; // <-- DIUBAH DARI GameManager
-    private Renderer cubeRenderer;
-    private Color originalColor;
+    [Header("Visual Feedback Colors")]
+    [SerializeField] private Color defaultColor = Color.white;
+    [SerializeField] private Color selectedColor = Color.yellow;
+    [SerializeField] private Color confirmFlashColor = Color.cyan;
 
-    void Start() {
+    private AudioSource audioSource;
+    private Renderer cubeRenderer;
+
+    void Awake() {
         audioSource = GetComponent<AudioSource>();
-        if (audioSource != null && noteSound != null) {
+        if (audioSource != null) {
             audioSource.clip = noteSound;
         }
 
-        // Cari NoteManager di scene
-        noteManager = FindObjectOfType<NoteManager>(); // <-- DIUBAH DARI GameManager
-
         cubeRenderer = GetComponent<Renderer>();
-        originalColor = cubeRenderer.material.color;
+        if (cubeRenderer != null) cubeRenderer.material.color = defaultColor;
     }
 
-    private void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Player")) {
-            // Beri tahu NoteManager bahwa kubus ini diinjak
-            if (noteManager != null) {
-                noteManager.PlayerSteppedOnCube(this); // <-- DIUBAH DARI gameManager
-            }
-        }
-    }
-
+    // Fungsi ini sekarang hanya dipanggil saat nada dikonfirmasi (Enter) atau saat contoh dimainkan.
     public void PlayNoteFeedback() {
         if (audioSource != null) {
             audioSource.Play();
         }
-        StartCoroutine(FlashColor());
+        StartCoroutine(FlashCoroutine(confirmFlashColor));
     }
 
     public void Highlight() {
-        StartCoroutine(FlashColor());
+        PlayNoteFeedback();
     }
 
-    private System.Collections.IEnumerator FlashColor() {
-        cubeRenderer.material.color = Color.cyan;
-        yield return new WaitForSeconds(0.5f);
-        cubeRenderer.material.color = originalColor;
+    public void Select() {
+        if (cubeRenderer != null) cubeRenderer.material.color = selectedColor;
+    }
+
+    public void Deselect() {
+        if (cubeRenderer != null) cubeRenderer.material.color = defaultColor;
+    }
+
+    private IEnumerator FlashCoroutine(Color flashColor) {
+        // Simpan warna saat ini (yaitu warna 'selected')
+        Color originalColor = selectedColor;
+        if (cubeRenderer != null) {
+            cubeRenderer.material.color = flashColor;
+            yield return new WaitForSeconds(0.4f);
+            // Hanya kembalikan ke warna 'selected' jika tidak ada yang mengubahnya
+            if (cubeRenderer.material.color == flashColor) {
+                cubeRenderer.material.color = originalColor;
+            }
+        }
     }
 }

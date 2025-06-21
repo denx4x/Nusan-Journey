@@ -1,67 +1,111 @@
 using UnityEngine;
-using Cinemachine; // Jika Anda menggunakan Cinemachine untuk kamera
+using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.Events; // <-- Pastikan using directive ini ada
+using Cinemachine;
 
 public class PuzzleModeController : MonoBehaviour {
     public static PuzzleModeController Instance { get; private set; }
 
     [Header("Referensi Komponen Player")]
     [SerializeField] private PlayerMovement playerMovement;
-    [SerializeField] private CharacterController characterController;
+    [SerializeField] private PlayerInteraction playerInteraction;
 
     [Header("Referensi Kamera")]
-    [Tooltip("Kamera utama yang mengikuti player")]
     [SerializeField] private GameObject playerFollowCamera;
-    [Tooltip("Kamera yang fokus pada puzzle")]
     [SerializeField] private GameObject puzzleCamera;
 
+    [Header("Referensi UI untuk Transisi")]
+    [SerializeField] private Image fadeScreen;
+    [SerializeField] private float fadeDuration = 0.5f;
+
+    [Header("Events")] // <-- BAGIAN BARU
+    [Tooltip("Event ini akan dipanggil SETELAH transisi keluar dari mode puzzle selesai.")]
+    public UnityEvent OnPuzzleExitComplete;
+
     private GridPuzzleManager currentPuzzle;
+    private bool isTransitioning = false;
 
     private void Awake() {
-        // Singleton Pattern
-        if (Instance != null && Instance != this) {
-            Destroy(gameObject);
-        } else {
-            Instance = this;
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); } else { Instance = this; }
     }
 
     public void StartPuzzle(GridPuzzleManager puzzleToStart) {
-        currentPuzzle = puzzleToStart;
-        Debug.Log($"Memulai Puzzle: {puzzleToStart.name}");
-
-        // 1. Nonaktifkan kontrol player normal
-        playerMovement.enabled = false;
-        characterController.enabled = false;
-
-        // 2. Aktifkan puzzle dan berlangganan event selesai
-        currentPuzzle.enabled = true;
-        currentPuzzle.OnPuzzleCompleted += EndPuzzle;
-
-        // 3. Ganti kamera
-        playerFollowCamera.SetActive(false);
-        puzzleCamera.SetActive(true);
+        if (isTransitioning || puzzleToStart == null) return;
+        StartCoroutine(StartPuzzleSequence(puzzleToStart));
     }
 
-    private void EndPuzzle() {
-        if (currentPuzzle == null) return;
-        Debug.Log($"Menyelesaikan Puzzle: {currentPuzzle.name}");
+    public void EndPuzzle() {
+        if (isTransitioning || currentPuzzle == null) return;
+        StartCoroutine(EndPuzzleSequence());
+    }
 
-        // 1. Berhenti berlangganan event untuk mencegah memory leak
-        currentPuzzle.OnPuzzleCompleted -= EndPuzzle;
+    private IEnumerator StartPuzzleSequence(GridPuzzleManager puzzleToStart) {
+        isTransitioning = true;
+        yield return StartCoroutine(Fade(1f));
 
-        // 2. Nonaktifkan puzzle
-        currentPuzzle.enabled = false;
-        // Opsional: nonaktifkan trigger agar tidak bisa diulang
-        // FindObjectOfType<PuzzleTrigger>()?.gameObject.SetActive(false); // Cari cara yang lebih spesifik jika ada banyak puzzle
+        currentPuzzle = puzzleToStart;
+        if (playerMovement != null) playerMovement.enabled = false;
+        if (playerInteraction != null) playerInteraction.enabled = false;
 
-        // 3. Aktifkan kembali kontrol player
-        playerMovement.enabled = true;
-        characterController.enabled = true;
+        currentPuzzle.gameObject.SetActive(true);
+        currentPuzzle.enabled = true;
+        // Berlangganan ke C# Action dari GridPuzzleManager
+        currentPuzzle.OnPuzzleCompleted += HandlePuzzleCompletion;
 
-        // 4. Kembalikan kamera
-        puzzleCamera.SetActive(false);
-        playerFollowCamera.SetActive(true);
+        if (playerFollowCamera != null) playerFollowCamera.SetActive(false);
+        if (puzzleCamera != null) puzzleCamera.SetActive(true);
+
+        yield return StartCoroutine(Fade(0f));
+        isTransitioning = false;
+    }
+
+    private IEnumerator EndPuzzleSequence() {
+        isTransitioning = true;
+        yield return StartCoroutine(Fade(1f));
+
+        if (currentPuzzle != null) {
+            // Berhenti berlangganan
+            currentPuzzle.OnPuzzleCompleted -= HandlePuzzleCompletion;
+            currentPuzzle.enabled = false;
+        }
+
+        if (playerMovement != null) playerMovement.enabled = true;
+        if (playerInteraction != null) playerInteraction.enabled = true;
+
+        if (puzzleCamera != null) puzzleCamera.SetActive(false);
+        if (playerFollowCamera != null) playerFollowCamera.SetActive(true);
 
         currentPuzzle = null;
+
+        yield return StartCoroutine(Fade(0f));
+
+        // --- PANGGIL UNITY EVENT DI AKHIR TRANSISI ---
+        Debug.Log("Transisi keluar puzzle selesai, memanggil UnityEvent OnPuzzleExitComplete.");
+        OnPuzzleExitComplete?.Invoke();
+        // -------------------------------------------
+
+        isTransitioning = false;
+    }
+
+    // Fungsi baru untuk menjadi "pendengar" dari C# Action
+    private void HandlePuzzleCompletion() {
+        EndPuzzle();
+    }
+
+    private IEnumerator Fade(float targetAlpha) { /* ... (fungsi fade tidak berubah) ... */
+        #region "Fungsi Fade"
+        if (fadeScreen == null) { yield break; }
+        Color currentColor = fadeScreen.color;
+        float startAlpha = currentColor.a;
+        float elapsedTime = 0f;
+        while (elapsedTime < fadeDuration) {
+            elapsedTime += Time.deltaTime;
+            float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, elapsedTime / fadeDuration);
+            fadeScreen.color = new Color(currentColor.r, currentColor.g, currentColor.b, newAlpha);
+            yield return null;
+        }
+        fadeScreen.color = new Color(currentColor.r, currentColor.g, currentColor.b, targetAlpha);
+        #endregion
     }
 }

@@ -2,35 +2,24 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 
-// Interface untuk objek interaktif
 public interface IInteractPlayer {
-    // Fungsi interaksi yang harus diimplementasikan oleh objek interaktif
     void Interact();
 }
 
 public class PlayerInteraction : MonoBehaviour {
     [SerializeField] private Player player;
-
     [Header("Optional Dialogue")]
-    [SerializeField] private bool useDialogue; // Toggle untuk mengaktifkan dialogue (jika diperlukan)
-    [SerializeField] private PlayerDialogueHandler dialogueHandler; // Reference ke DialogueHandler (optional)
+    [SerializeField] private bool useDialogue;
+    [SerializeField] private PlayerDialogueHandler dialogueHandler;
 
-    // Event global (jika diperlukan oleh skrip lain)
     public event Action OnInteract;
-
-    // Target interaksi aktif: Menggunakan IInteractPlayer
     public IInteractPlayer currentInteractable { get; private set; }
 
+    // BARU: State untuk mengunci interaksi
+    private bool isInteractionLocked = false;
+
     private void Start() {
-        if (player == null) {
-            Debug.LogError("PlayerInteraction: Player reference belum diassign di Inspector!");
-            return;
-        }
-        if (player.PlayerControls == null) {
-            Debug.LogError("PlayerInteraction: PlayerControls belum diinisialisasi di dalam Player!");
-            return;
-        }
-        // Berlangganan ke input action interaksi
+        if (player == null || player.PlayerControls == null) { Debug.LogError("Player/PlayerControls tidak di-assign!"); return; }
         player.PlayerControls.Character.Interaction.performed += OnInteractionPerformed;
     }
 
@@ -40,33 +29,36 @@ public class PlayerInteraction : MonoBehaviour {
         }
     }
 
-    // Fungsi yang dipanggil saat tombol interaksi ditekan
     private void OnInteractionPerformed(InputAction.CallbackContext ctx) {
-        Debug.Log("Player melakukan interaksi!");
-
-        // Panggil fungsi Interact() di target interaksi aktif (jika ada)
         if (currentInteractable != null) {
             currentInteractable.Interact();
         }
 
-        // Jika opsi dialogue aktif dan DialogueHandler telah diassign, trigger dialog
         if (useDialogue && dialogueHandler != null) {
             dialogueHandler.TriggerDialogue();
         }
-
-        // Memancarkan event global (jika skrip lain membutuhkan)
         OnInteract?.Invoke();
     }
 
-    // Fungsi untuk mendaftarkan objek interaktif sebagai target aktif
+    // DIUBAH: Fungsi ini sekarang tidak akan berjalan jika interaksi terkunci
     public void SetCurrentInteractable(IInteractPlayer interactable) {
+        // Jika sedang memegang objek, jangan biarkan objek lain mencuri fokus.
+        if (isInteractionLocked) return;
         currentInteractable = interactable;
     }
 
-    // Fungsi untuk menghapus objek interaktif dari target aktif
     public void ClearCurrentInteractable(IInteractPlayer interactable) {
         if (currentInteractable == interactable) {
             currentInteractable = null;
         }
+    }
+
+    // --- FUNGSI BARU UNTUK MENGUNCI/MEMBUKA INTERAKSI ---
+    public void LockInteraction() {
+        isInteractionLocked = true;
+    }
+
+    public void UnlockInteraction() {
+        isInteractionLocked = false;
     }
 }

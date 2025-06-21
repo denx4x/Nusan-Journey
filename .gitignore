@@ -9,11 +9,20 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+
+# Plugin
 /[Aa]ssets/Plugins
 /[Aa]ssets/Plugins.meta
 
+# Sprite
+/[Aa]ssets/[Ss]prites
+/[Aa]ssets/[Ss]prites.meta
+
 # Lighting Scene
+/[Aa]ssets/Scenes/2025/Prologue/
 /[Aa]ssets/Scenes/2025/scene 1/
+/[Aa]ssets/Scenes/2025/[Ss]cene 2/
+/[Aa]ssets/Scenes/2025/[Ss]cene 3/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
