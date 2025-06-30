@@ -1,49 +1,42 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-using UnityEngine.EventSystems;  // Diperlukan untuk interface event
+using UnityEngine.EventSystems;
+using System.Collections; // <-- Diperlukan untuk Coroutine (IEnumerator)
 
 public class ButtonManager : MonoBehaviour, IPointerEnterHandler {
-
-    [Space] 
+    [Space]
     [Header("Sprite")]
-    [SerializeField] private Sprite idleSprite;  // Sprite default (idle)
-    [SerializeField] private Sprite selectedSprite;  // Sprite ketika tombol dipilih
-    private Button button;  // Referensi ke komponen Button
-    private Image buttonImage;  // Referensi ke komponen Image pada button
+    [SerializeField] private Sprite idleSprite;
+    [SerializeField] private Sprite selectedSprite;
+    private Button button;
+    private Image buttonImage;
 
     [Space]
-    private AudioSource audioSource;  // Komponen AudioSource untuk memutar suara
+    private AudioSource audioSource;
 
     [Space]
     [Header("Audio Sfx")]
-    public AudioClip buttonClickSound;  // AudioClip untuk suara klik tombol
-    public AudioClip buttonHoverSound;  // AudioClip untuk suara hover tombol
+    public AudioClip buttonClickSound;
+    public AudioClip buttonHoverSound;
 
     [Space]
     [Header("Scene Settings")]
-    public bool toggleLoadScene; // Toggle untuk menampilkan sceneToLoad di Inspector
-    public string sceneToLoad; // Nama Scene yang ingin di load
+    public bool toggleLoadScene;
+    public string sceneToLoad;
 
     public string GetSceneToLoad() => toggleLoadScene ? sceneToLoad : null;
 
     void Start() {
-        // Mendapatkan referensi ke komponen Button dan Image
         button = GetComponent<Button>();
         buttonImage = GetComponent<Image>();
-
-        // Mengatur sprite default ke idle
         button.image.sprite = idleSprite;
-
-        // Menambahkan event listener untuk event klik pada tombol
         button.onClick.AddListener(OnButtonClick);
-
-        // Menambahkan komponen AudioSource
         audioSource = gameObject.AddComponent<AudioSource>();
     }
 
     public void OnButtonClick() {
-        // Memutar suara klik tombol jika buttonClickSound tidak null
+        // Memutar suara klik tombol
         if (buttonClickSound != null) {
             audioSource.PlayOneShot(buttonClickSound);
         }
@@ -57,37 +50,58 @@ public class ButtonManager : MonoBehaviour, IPointerEnterHandler {
         // Mengatur sprite tombol yang diklik ke selected sprite
         buttonImage.sprite = selectedSprite;
 
-        // Memuat scene yang ditentukan
-        if (!string.IsNullOrEmpty(sceneToLoad))
-        {
-            Debug.Log("Memuat scene: " + sceneToLoad);
-            if (sceneToLoad == "MainHub Sore" && PlayerPrefs.GetInt("HasLaunched", 0) == 0) return;
-            SceneManager.LoadScene(sceneToLoad);
+        // ---- PERUBAHAN UTAMA DIMULAI DI SINI ----
+        // Memeriksa apakah scene perlu di-load dan tidak kosong
+        if (toggleLoadScene && !string.IsNullOrEmpty(sceneToLoad)) {
+            // Pengecekan kondisi khusus tetap sama
+            if (sceneToLoad == "MainHub Sore" && PlayerPrefs.GetInt("HasLaunched", 0) == 0) {
+                Debug.Log("Kondisi khusus, scene tidak dimuat.");
+                return;
+            }
+
+            // Memulai Coroutine untuk memuat scene secara async
+            StartCoroutine(LoadSceneAsyncCoroutine());
+        }
+        // ---- PERUBAHAN UTAMA SELESAI ----
+    }
+
+    // ---- COROUTINE BARU UNTUK ASYNC LOADING ----
+    private IEnumerator LoadSceneAsyncCoroutine() {
+        Debug.Log("Mulai memuat scene secara async: " + sceneToLoad);
+
+        // Mulai memuat scene di background dan simpan operasinya
+        AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneToLoad);
+
+        // (Opsional) Di sini Anda bisa mengaktifkan UI loading screen
+        // contoh: loadingScreenPanel.SetActive(true);
+
+        // Tunggu sampai scene selesai di-load
+        while (!asyncOperation.isDone) {
+            // (Opsional) Di sini Anda bisa memperbarui progress bar
+            // float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
+            // loadingBar.fillAmount = progress;
+
+            // Tunggu frame berikutnya sebelum melanjutkan loop
+            yield return null;
         }
     }
 
     public void OnPointerEnter(PointerEventData eventData) {
-        // Memutar suara hover jika buttonHoverSound tidak null
         if (buttonHoverSound != null) {
             audioSource.PlayOneShot(buttonHoverSound);
         }
     }
 
     public void QuitApplication() {
-        // Fungsi untuk keluar dari aplikasi
         Application.Quit();
     }
 
     public void ResetToIdle() {
-        // Mengatur sprite tombol kembali ke idle sprite
         buttonImage.sprite = idleSprite;
     }
 
-    void Update()
-    {
-        // Menjalankan fungsi apabila tombol Esc ditekan untuk menyembunyikan atau menampilkan panel
-        if (Input.GetKeyDown(KeyCode.Escape)) {            
-            // Mengatur semua tombol kembali ke idle sprite
+    void Update() {
+        if (Input.GetKeyDown(KeyCode.Escape)) {
             ResetToIdle();
         }
     }
