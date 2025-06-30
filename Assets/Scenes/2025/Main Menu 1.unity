@@ -1558,7 +1558,7 @@ MonoBehaviour:
   buttonClickSound: {fileID: 0}
   buttonHoverSound: {fileID: 0}
   toggleLoadScene: 1
-  sceneToLoad: Scene 1
+  sceneToLoad: Prologue
 --- !u!114 &466681931
 MonoBehaviour:
   m_ObjectHideFlags: 0
