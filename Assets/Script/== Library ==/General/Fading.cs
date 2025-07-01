@@ -1,19 +1,23 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Events; // <-- PENTING: Namespace ini wajib ada untuk menggunakan UnityEvent
+using UnityEngine.Events;
 
 /// <summary>
 /// Mengontrol efek fade-in dan fade-out untuk sebuah UI Image.
-/// Kini dilengkapi dengan event yang dieksekusi setelah fade selesai.
+/// Kini dilengkapi dengan durasi total dan durasi transisi alpha yang terpisah.
 /// </summary>
 public class Fading : MonoBehaviour {
     [Header("Pengaturan Fade Utama")]
     [Tooltip("Seret komponen Image dari UI Panel hitam Anda ke sini.")]
     [SerializeField] private Image fadeScreen;
 
-    [Tooltip("Durasi total untuk animasi fade (dalam detik).")]
-    [SerializeField] private float fadeDuration = 1.0f;
+    [Tooltip("Durasi TOTAL untuk keseluruhan efek fade (termasuk waktu jeda/tahan).")]
+    [SerializeField] private float fadeDuration = 2.0f; // Contoh: total durasi 2 detik
+
+    // ---- VARIABEL BARU ----
+    [Tooltip("Durasi KHUSUS untuk perubahan alpha dari transparan ke hitam (atau sebaliknya). Nilai ini harus lebih kecil atau sama dengan Fade Duration.")]
+    [SerializeField] private float alphaTransitionDuration = 0.5f; // Contoh: transisi alpha hanya 0.5 detik
 
     [Header("Fitur Otomatis di Start")]
     [Tooltip("Jika dicentang, layar akan mulai gelap lalu melakukan transisi fade-in saat game dimulai.")]
@@ -30,26 +34,65 @@ public class Fading : MonoBehaviour {
     public UnityEvent OnFadeOutComplete;
 
 
-    // --- Coroutine Inti ---
+    // --- Coroutine Inti (Telah Dimodifikasi) ---
     private IEnumerator Fade(float targetAlpha) {
         if (fadeScreen == null) {
             Debug.LogError("Error: Komponen 'Fade Screen' belum di-assign di Inspector!");
             yield break;
         }
 
-        Color currentColor = fadeScreen.color;
-        float startAlpha = currentColor.a;
-        float elapsedTime = 0f;
-
-        while (elapsedTime < fadeDuration) {
-            elapsedTime += Time.deltaTime;
-            float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, elapsedTime / fadeDuration);
-            fadeScreen.color = new Color(currentColor.r, currentColor.g, currentColor.b, newAlpha);
-            yield return null;
+        // Memastikan durasi transisi tidak melebihi durasi total
+        if (alphaTransitionDuration > fadeDuration) {
+            Debug.LogWarning("Alpha Transition Duration tidak boleh lebih besar dari Fade Duration. Nilai disamakan.");
+            alphaTransitionDuration = fadeDuration;
         }
 
-        fadeScreen.color = new Color(currentColor.r, currentColor.g, currentColor.b, targetAlpha);
+        Color screenColor = fadeScreen.color;
+        float startAlpha = screenColor.a;
+        float holdDuration = fadeDuration - alphaTransitionDuration; // Menghitung sisa waktu untuk jeda
 
+        // === Logika FADE OUT (Layar menjadi hitam) ===
+        // Transisi alpha terjadi LEBIH DULU, baru ditahan (jeda).
+        if (targetAlpha > startAlpha) {
+            // Tahap 1: Transisi Alpha
+            float timer = 0f;
+            while (timer < alphaTransitionDuration) {
+                timer += Time.deltaTime;
+                float progress = timer / alphaTransitionDuration;
+                float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, progress);
+                fadeScreen.color = new Color(screenColor.r, screenColor.g, screenColor.b, newAlpha);
+                yield return null;
+            }
+            // Memastikan alpha akhir sesuai target
+            fadeScreen.color = new Color(screenColor.r, screenColor.g, screenColor.b, targetAlpha);
+
+            // Tahap 2: Menahan layar hitam
+            if (holdDuration > 0) {
+                yield return new WaitForSeconds(holdDuration);
+            }
+        }
+        // === Logika FADE IN (Layar menjadi transparan) ===
+        // Layar ditahan (jeda) LEBIH DULU, baru transisi alpha.
+        else {
+            // Tahap 1: Menahan layar hitam
+            if (holdDuration > 0) {
+                yield return new WaitForSeconds(holdDuration);
+            }
+
+            // Tahap 2: Transisi Alpha
+            float timer = 0f;
+            while (timer < alphaTransitionDuration) {
+                timer += Time.deltaTime;
+                float progress = timer / alphaTransitionDuration;
+                float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, progress);
+                fadeScreen.color = new Color(screenColor.r, screenColor.g, screenColor.b, newAlpha);
+                yield return null;
+            }
+            // Memastikan alpha akhir sesuai target
+            fadeScreen.color = new Color(screenColor.r, screenColor.g, screenColor.b, targetAlpha);
+        }
+
+        // Menjalankan Event setelah seluruh durasi (termasuk jeda) selesai
         if (targetAlpha == 0f) {
             OnFadeInComplete?.Invoke();
         } else if (targetAlpha == 1f) {
@@ -58,7 +101,7 @@ public class Fading : MonoBehaviour {
     }
 
 
-    // --- Fungsi Publik untuk Kontrol ---
+    // --- Fungsi Publik untuk Kontrol (Tidak ada perubahan) ---
     public void FadeIn() {
         StartCoroutine(Fade(0f));
     }
@@ -68,7 +111,7 @@ public class Fading : MonoBehaviour {
     }
 
 
-    // --- Fungsi Bawaan Unity ---
+    // --- Fungsi Bawaan Unity (Tidak ada perubahan signifikan) ---
     private void Start() {
         if (fadeScreen == null) { return; }
 
@@ -78,17 +121,14 @@ public class Fading : MonoBehaviour {
         }
 
         if (fadeInOnStart) {
-            // --- KOREKSI DI SINI ---
-            // Mengakses .color terlebih dahulu sebelum .r, .g, .b
             fadeScreen.color = new Color(fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, 1f);
             FadeIn();
         } else if (fadeOutOnStart) {
-            // --- KOREKSI DI SINI ---
             fadeScreen.color = new Color(fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, 0f);
             FadeOut();
         } else {
-            // --- KOREKSI DI SINI ---
-            fadeScreen.color = new Color(fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, 0f);
+            // Defaultnya, layar mulai transparan jika tidak ada opsi Start yang aktif
+            // fadeScreen.color = new Color(fadeScreen.color.r, fadeScreen.color.g, fadeScreen.color.b, 0f);
         }
     }
 }

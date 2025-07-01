@@ -1,12 +1,11 @@
 using UnityEngine;
 using DG.Tweening;
 using System.Collections;
-using UnityEngine.Events; // <-- 1. Pastikan namespace ini ada
+using UnityEngine.Events;
 
 /// <summary>
 /// Mengontrol animasi untuk memunculkan dan menyembunyikan sebuah panel UI.
-/// Didesain untuk bisa digunakan kembali untuk panel UI mana pun.
-/// Versi ini sudah mendukung Canvas World Space dan Screen Space.
+/// Kini dilengkapi dengan delay sebelum muncul di awal permainan.
 /// </summary>
 public class UIArea : MonoBehaviour {
     [Header("UI Element to Control")]
@@ -14,7 +13,14 @@ public class UIArea : MonoBehaviour {
     [SerializeField] private GameObject uiContainer;
 
     [Header("Behavior Settings")]
+    [Tooltip("Jika dicentang, UI akan otomatis muncul saat scene dimulai.")]
     [SerializeField] private bool showOnStart = false;
+
+    // ---- VARIABEL BARU ----
+    [Tooltip("Jeda waktu (dalam detik) sebelum UI muncul. Hanya berfungsi jika 'Show On Start' dicentang.")]
+    [SerializeField] private float delayBeforeStart = 0f;
+    // ----------------------
+
     [SerializeField] private bool autoHide = false;
     [SerializeField] private float autoHideDelay = 3f;
 
@@ -23,17 +29,13 @@ public class UIArea : MonoBehaviour {
     [SerializeField] private Ease easeTypeShow = Ease.OutBack;
     [SerializeField] private Ease easeTypeHide = Ease.InBack;
 
-    // --- PERUBAHAN 1: Tambahkan UnityEvent baru ---
     [Header("Events")]
     [Tooltip("Event yang akan dipanggil setelah animasi HideUI selesai sepenuhnya.")]
     public UnityEvent OnHideComplete;
-    // ---------------------------------------------
 
-    // Komponen yang diperlukan untuk animasi
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
     private bool isOpen = false;
-
     private Vector3 originalScale;
     private Coroutine autoHideCoroutine;
 
@@ -52,17 +54,30 @@ public class UIArea : MonoBehaviour {
 
         originalScale = rectTransform.localScale;
 
+        // Atur kondisi awal UI (tersembunyi)
         canvasGroup.alpha = 0f;
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
         isOpen = false;
     }
 
+    // ---- PERUBAHAN UTAMA DI SINI ----
     private void Start() {
+        // Jika showOnStart aktif, jalankan coroutine untuk menanganinya
         if (showOnStart) {
-            ShowUI();
+            StartCoroutine(ShowOnStartCoroutine());
         }
     }
+
+    // ---- COROUTINE BARU UNTUK MENANGANI DELAY ----
+    private IEnumerator ShowOnStartCoroutine() {
+        // 1. Tunggu sesuai durasi delay yang ditentukan
+        yield return new WaitForSeconds(delayBeforeStart);
+
+        // 2. Setelah delay selesai, panggil fungsi untuk memunculkan UI
+        ShowUI();
+    }
+    // ------------------------------------------------
 
     public void ShowUI() {
         if (isOpen) return;
@@ -77,7 +92,6 @@ public class UIArea : MonoBehaviour {
 
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
-
         rectTransform.localScale = originalScale * 0.9f;
 
         Sequence showSequence = DOTween.Sequence();
@@ -109,11 +123,7 @@ public class UIArea : MonoBehaviour {
         hideSequence.OnComplete(() => {
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
-
-            // --- PERUBAHAN 2: Panggil event di sini! ---
-            // Event ini akan terpanggil tepat setelah UI selesai disembunyikan.
             OnHideComplete?.Invoke();
-            // ------------------------------------------
         });
     }
 

@@ -1046,6 +1046,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeScreen: {fileID: 654168340}
   fadeDuration: 4
+  alphaTransitionDuration: 0.5
   fadeInOnStart: 0
   fadeOutOnStart: 1
   OnFadeInComplete:
@@ -8685,6 +8686,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   uiContainer: {fileID: 386491888}
   showOnStart: 1
+  delayBeforeStart: 0
   autoHide: 1
   autoHideDelay: 3
   animationDuration: 2
@@ -8790,6 +8792,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeScreen: {fileID: 654168340}
   fadeDuration: 4
+  alphaTransitionDuration: 0.5
   fadeInOnStart: 0
   fadeOutOnStart: 1
   OnFadeInComplete:
@@ -28074,6 +28077,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeScreen: {fileID: 654168340}
   fadeDuration: 3
+  alphaTransitionDuration: 3
   fadeInOnStart: 1
   fadeOutOnStart: 0
   OnFadeInComplete:
@@ -70265,6 +70269,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeScreen: {fileID: 654168340}
   fadeDuration: 3
+  alphaTransitionDuration: 0.5
   fadeInOnStart: 0
   fadeOutOnStart: 0
   OnFadeInComplete:
