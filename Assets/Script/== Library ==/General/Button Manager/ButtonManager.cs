@@ -2,9 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
-using System.Collections; // <-- Diperlukan untuk Coroutine (IEnumerator)
+using System.Collections;
+using DG.Tweening; // <-- PASTIKAN DOTWEEN ADA DI SINI
 
-public class ButtonManager : MonoBehaviour, IPointerEnterHandler {
+public class ButtonManager : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler { // <-- TAMBAHKAN IPointerExitHandler
     [Space]
     [Header("Sprite")]
     [SerializeField] private Sprite idleSprite;
@@ -13,12 +14,19 @@ public class ButtonManager : MonoBehaviour, IPointerEnterHandler {
     private Image buttonImage;
 
     [Space]
-    private AudioSource audioSource;
-
-    [Space]
     [Header("Audio Sfx")]
     public AudioClip buttonClickSound;
     public AudioClip buttonHoverSound;
+    private AudioSource audioSource;
+
+    // ---- KODE BARU UNTUK ANIMASI HOVER ----
+    [Space]
+    [Header("Hover Animation")]
+    public bool useHoverScale = true; // Aktifkan/nonaktifkan efek hover
+    public float hoverScale = 1.1f;   // Seberapa besar skala saat di-hover
+    public float hoverDuration = 0.2f;// Durasi animasi hover
+    private Vector3 initialScale;
+    // ---- AKHIR DARI KODE BARU ----
 
     [Space]
     [Header("Scene Settings")]
@@ -30,65 +38,66 @@ public class ButtonManager : MonoBehaviour, IPointerEnterHandler {
     void Start() {
         button = GetComponent<Button>();
         buttonImage = GetComponent<Image>();
-        button.image.sprite = idleSprite;
-        button.onClick.AddListener(OnButtonClick);
         audioSource = gameObject.AddComponent<AudioSource>();
+
+        initialScale = transform.localScale; // <-- Simpan skala awal
+
+        if (idleSprite != null) {
+            button.image.sprite = idleSprite;
+        }
+        button.onClick.AddListener(OnButtonClick);
     }
 
     public void OnButtonClick() {
-        // Memutar suara klik tombol
         if (buttonClickSound != null) {
             audioSource.PlayOneShot(buttonClickSound);
         }
 
-        // Mengatur semua tombol kembali ke idle sprite
         ButtonManager[] allButtons = FindObjectsOfType<ButtonManager>();
         foreach (ButtonManager btn in allButtons) {
             btn.ResetToIdle();
         }
 
-        // Mengatur sprite tombol yang diklik ke selected sprite
-        buttonImage.sprite = selectedSprite;
+        if (selectedSprite != null) {
+            buttonImage.sprite = selectedSprite;
+        }
 
-        // ---- PERUBAHAN UTAMA DIMULAI DI SINI ----
-        // Memeriksa apakah scene perlu di-load dan tidak kosong
         if (toggleLoadScene && !string.IsNullOrEmpty(sceneToLoad)) {
-            // Pengecekan kondisi khusus tetap sama
             if (sceneToLoad == "MainHub Sore" && PlayerPrefs.GetInt("HasLaunched", 0) == 0) {
                 Debug.Log("Kondisi khusus, scene tidak dimuat.");
                 return;
             }
-
-            // Memulai Coroutine untuk memuat scene secara async
             StartCoroutine(LoadSceneAsyncCoroutine());
         }
-        // ---- PERUBAHAN UTAMA SELESAI ----
     }
 
-    // ---- COROUTINE BARU UNTUK ASYNC LOADING ----
     private IEnumerator LoadSceneAsyncCoroutine() {
-        Debug.Log("Mulai memuat scene secara async: " + sceneToLoad);
-
-        // Mulai memuat scene di background dan simpan operasinya
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneToLoad);
-
-        // (Opsional) Di sini Anda bisa mengaktifkan UI loading screen
-        // contoh: loadingScreenPanel.SetActive(true);
-
-        // Tunggu sampai scene selesai di-load
         while (!asyncOperation.isDone) {
-            // (Opsional) Di sini Anda bisa memperbarui progress bar
-            // float progress = Mathf.Clamp01(asyncOperation.progress / 0.9f);
-            // loadingBar.fillAmount = progress;
-
-            // Tunggu frame berikutnya sebelum melanjutkan loop
             yield return null;
         }
     }
 
+    // ---- METHOD HOVER DIPERBARUI ----
     public void OnPointerEnter(PointerEventData eventData) {
+        // Memainkan suara hover
         if (buttonHoverSound != null) {
             audioSource.PlayOneShot(buttonHoverSound);
+        }
+
+        // Memainkan animasi skala jika diaktifkan
+        if (useHoverScale) {
+            transform.DOKill(); // Hentikan animasi sebelumnya
+            transform.DOScale(initialScale * hoverScale, hoverDuration).SetEase(Ease.OutBack);
+        }
+    }
+
+    // ---- METHOD BARU SAAT KURSOR KELUAR ----
+    public void OnPointerExit(PointerEventData eventData) {
+        // Mengembalikan skala ke ukuran semula
+        if (useHoverScale) {
+            transform.DOKill(); // Hentikan animasi sebelumnya
+            transform.DOScale(initialScale, hoverDuration).SetEase(Ease.OutSine);
         }
     }
 
@@ -97,7 +106,9 @@ public class ButtonManager : MonoBehaviour, IPointerEnterHandler {
     }
 
     public void ResetToIdle() {
-        buttonImage.sprite = idleSprite;
+        if (idleSprite != null) {
+            buttonImage.sprite = idleSprite;
+        }
     }
 
     void Update() {

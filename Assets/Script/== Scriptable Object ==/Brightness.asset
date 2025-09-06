@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1442c16eea652de49baa13fc64ce6c39, type: 3}
+  m_Name: Brightness
+  m_EditorClassIdentifier: 
+  settingName: 
+  settingKey: 
+  type: 0
+  slider_minValue: 0
+  slider_maxValue: 1
+  slider_defaultValue: 0.8
+  slider_wholeNumbers: 0
+  toggle_defaultValue: 1

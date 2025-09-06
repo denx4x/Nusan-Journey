@@ -19,14 +19,18 @@ public class DialogueUI : MonoBehaviour {
     [Header("Internal References")]
     [SerializeField] private GameObject audioSourceObject;
     [Tooltip("Drag GameObject dari scene yang memiliki skrip DialogueSignalReceiver ke sini.")]
-    [SerializeField] private DialogueSignalReceiver signalReceiver; // <-- Referensi ke penerima sinyal
+    [SerializeField] private DialogueSignalReceiver signalReceiver;
 
     private PlayerDialogueHandler PlayerDialogueHandler;
     private ResponseHandler responseHandler;
     private TypewriterEffect typewriterEffect;
+    private AudioSource audioSource;
 
     private CanvasGroup dialogueBoxCanvasGroup;
     private RectTransform dialogueBoxRect;
+
+    private bool proceedToNextLine = false;
+    private bool isSkipping = false;
 
     private void Start() {
         typewriterEffect = GetComponent<TypewriterEffect>();
@@ -35,8 +39,32 @@ public class DialogueUI : MonoBehaviour {
         dialogueBoxCanvasGroup = dialogueBox.GetComponent<CanvasGroup>();
         dialogueBoxRect = dialogueBox.GetComponent<RectTransform>();
 
+        if (audioSourceObject != null) audioSource = audioSourceObject.GetComponent<AudioSource>();
+
         if (dialogueBoxCanvasGroup != null) dialogueBoxCanvasGroup.alpha = 0;
         dialogueBox.SetActive(false);
+    }
+
+    public void OnSkipClicked() {
+        if (!isSkipping) {
+            StartCoroutine(SkipCoroutine());
+        }
+    }
+
+    private IEnumerator SkipCoroutine() {
+        isSkipping = true;
+
+        if (audioSource != null && audioSource.isPlaying) {
+            audioSource.Stop();
+        }
+        if (typewriterEffect.IsRunning) {
+            typewriterEffect.Stop();
+        }
+
+        proceedToNextLine = true;
+
+        yield return new WaitForSeconds(0.1f);
+        isSkipping = false;
     }
 
     public void ShowDialogue(DialogueObject dialogueObject) {
@@ -55,6 +83,10 @@ public class DialogueUI : MonoBehaviour {
     }
 
     public void CloseDialogueBox() {
+        if (audioSource != null && audioSource.isPlaying) {
+            audioSource.Stop();
+        }
+
         dialogueBoxRect.DOKill();
         dialogueBoxCanvasGroup.DOKill();
 
@@ -78,27 +110,29 @@ public class DialogueUI : MonoBehaviour {
         for (int i = 0; i < dialogueObject.Dialogue.Length; i++) {
             DialogueObject.DialogueEntry entry = dialogueObject.Dialogue[i];
 
-            // Mengirim sinyal event 'OnLineShown' dari DialogueObject
+            proceedToNextLine = false;
+
             if (signalReceiver != null && !string.IsNullOrWhiteSpace(entry.eventOnLineShown)) {
                 signalReceiver.ReceiveSignal(entry.eventOnLineShown);
             }
 
-            if (entry.Audio != null && audioSourceObject != null) {
-                AudioSource audioSource = audioSourceObject.GetComponent<AudioSource>();
-                if (audioSource != null) audioSource.PlayOneShot(entry.Audio, 1f);
+            if (entry.Audio != null && audioSource != null) {
+                audioSource.PlayOneShot(entry.Audio, 1f);
             }
 
             yield return RunTypingEffect(entry.Text1, entry.typewriterSpeedMultiplier);
 
-            // Mengirim sinyal event 'OnLineFinished' dari DialogueObject
             if (signalReceiver != null && !string.IsNullOrWhiteSpace(entry.eventOnLineFinished)) {
                 signalReceiver.ReceiveSignal(entry.eventOnLineFinished);
             }
 
             if (i == dialogueObject.Dialogue.Length - 1 && dialogueObject.HasResponses) break;
 
+            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || proceedToNextLine);
+
+            // --- PERUBAHAN DI SINI: Tambahkan jeda 1 frame ---
+            // Ini memastikan semua event di frame saat ini selesai sebelum lanjut ke baris berikutnya.
             yield return null;
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
         }
 
         if (dialogueObject.HasResponses) {
@@ -113,8 +147,7 @@ public class DialogueUI : MonoBehaviour {
         while (typewriterEffect.IsRunning) {
             yield return null;
             if (Input.GetKeyDown(KeyCode.LeftAlt)) {
-                typewriterEffect.Stop();
-                textLabel.maxVisibleCharacters = dialogue.Length;
+                OnSkipClicked();
             }
         }
     }
